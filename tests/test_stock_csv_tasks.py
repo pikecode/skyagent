@@ -24,6 +24,7 @@ def test_csv_rows_status_note_duplicates_and_physical_lines(context, tmp_path):
     path.write_text(
         'kind,value,state,note\ninvite,private-code,available,"first\nsecond"\ngift,used-gift,used,\ngift,used-gift,available,\ngift,blocked,reserved,\n',
         encoding="utf-8",
+        newline="",
     )
     stock = Inventory(db)
     report = stock.import_rows(sid, read_csv(path, "stock"))

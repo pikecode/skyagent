@@ -19,6 +19,7 @@ def test_import_row_numbers_multiline_duplicates_and_private_report(database, tm
     path.write_text(
         'name,phone,note\n\nAlpha,138-1234-5678,"line one\nline two"\nDuplicate,13812345678,\nInvalid,not-a-phone,\n',
         encoding="utf-8-sig",
+        newline="",
     )
     rows = read_csv(path, "members")
     assert [row.line_number for row in rows] == [3, 5, 6]
@@ -29,6 +30,25 @@ def test_import_row_numbers_multiline_duplicates_and_private_report(database, tm
     assert "138" not in repr(report) and "not-a-phone" not in repr(report)
     assert database.list_members(store)[0]["note"] == "line one\nline two"
     assert database.list_activity(store)[0]["action"] == "导入会员"
+
+
+@pytest.mark.parametrize("line_ending", ["\n", "\r\n", "\r"])
+def test_csv_preserves_quoted_newlines_and_physical_lines(tmp_path, line_ending):
+    path = tmp_path / "newlines.csv"
+    contents = (
+        "kind,value,note"
+        + line_ending
+        + 'invite,code,"first'
+        + line_ending
+        + 'second"'
+        + line_ending
+        + "gift,other,"
+        + line_ending
+    )
+    path.write_bytes(contents.encode("utf-8-sig"))
+    rows = read_csv(path, "stock")
+    assert [row.line_number for row in rows] == [2, 4]
+    assert rows[0]["note"] == "first" + line_ending + "second"
 
 
 def test_missing_optional_values_and_extra_cells(database, tmp_path):
