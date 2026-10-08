@@ -222,7 +222,8 @@ def test_encrypted_success_restart_and_offline_exports(context, tmp_path):
         full = tmp_path.parent / (tmp_path.name + "-full.csv")
         outputs.export_to(masked, sid, aid, owner, rows)
         outputs.export_to(full, sid, aid, owner, rows, full=True)
-        assert CODE not in masked.read_text() and CODE in full.read_text()
+        assert CODE not in masked.read_text(encoding="utf-8-sig")
+        assert CODE in full.read_text(encoding="utf-8-sig")
         assert reopened.path.read_bytes() == before
     finally:
         reopened.close()
@@ -292,7 +293,7 @@ def test_restore_allows_masked_only_and_prevents_regeneration(context, tmp_path)
         outputs.export_to(path, sid, aid, owner, rows, full=True)
     with pytest.raises(ValueError):
         ShareJournal(db).reserve(sid, aid, owner, item)
-    assert CODE not in path.read_text()
+    assert CODE not in path.read_text(encoding="utf-8-sig")
 
 
 @pytest.mark.parametrize(

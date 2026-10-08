@@ -187,9 +187,9 @@ def test_offline_full_code_export_never_generates(context, monkeypatch, tmp_path
             QFileDialog, "getSaveFileName", lambda *args: (str(path), "")
         )
         dialog.export_masked()
-        assert CODE not in path.read_text()
+        assert CODE not in path.read_text(encoding="utf-8-sig")
         dialog.export_full()
-        assert CODE in path.read_text()
+        assert CODE in path.read_text(encoding="utf-8-sig")
         assert window.db.path.read_bytes() == before
         assert len(query.calls) == 1 and len(share.calls) == 1
     finally:

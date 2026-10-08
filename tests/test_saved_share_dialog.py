@@ -192,7 +192,7 @@ def test_restore_history_readable_but_import_export_blocked(
     dialog.export_full()
     assert not path.exists()
     dialog.export_masked()
-    assert URL not in path.read_text()
+    assert URL not in path.read_text(encoding="utf-8-sig")
     dialog.close()
 
 

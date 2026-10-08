@@ -25,7 +25,7 @@ def test_complete_synthetic_workflow_and_private_evidence(tmp_path):
         "share_lost_reply": 1,
     }
     assert report["network"] == "blocked" and not report["production_verified"]
-    assert json.loads((output / "report.json").read_text()) == report
+    assert json.loads((output / "report.json").read_text(encoding="utf-8")) == report
     assert {file.name for file in output.iterdir()} == {
         "report.json",
         "masked-history.csv",
@@ -48,4 +48,4 @@ def test_failure_report_does_not_claim_success_or_leak(tmp_path, monkeypatch):
     output = tmp_path / "failed"
     report = module["run"](output)
     assert not report["ok"] and report["steps"] == []
-    assert module["TOKEN"] not in (output / "report.json").read_text()
+    assert module["TOKEN"] not in (output / "report.json").read_text(encoding="utf-8")

@@ -78,6 +78,12 @@ def run(timeout=180):
         message = f"Pytest {reason}; last active test: {diagnostic(output)}"
         escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error title=Desktop tests {reason}::{escaped}")
+        # Report every failing test summary, not just the last one, so platform
+        # compatibility issues can be fixed together even without log access.
+        failures = re.findall(r"^FAILED (tests[/\\][^\r\n]+)", output, re.M)
+        for failure in dict.fromkeys(failures):
+            escaped = failure[:1000].replace("%", "%25").replace("\r", "%0D")
+            print(f"::error title=Pytest failure::{escaped}")
     print("\n".join(line[:1000] for line in output.splitlines()[-200:]))
     return code
 

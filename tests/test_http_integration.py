@@ -17,7 +17,10 @@ def test_contract_report_without_stdout(tmp_path, monkeypatch):
     report = tmp_path / "report.json"
     monkeypatch.setattr("skyagent_manager.contract_check.sys.stdout", None)
     assert main(report) == 0
-    assert json.loads(report.read_text())["scope"] == "loopback-only-synthetic"
+    assert (
+        json.loads(report.read_text(encoding="utf-8"))["scope"]
+        == "loopback-only-synthetic"
+    )
 
 
 @pytest.mark.parametrize(

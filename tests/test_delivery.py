@@ -43,7 +43,7 @@ def test_offline_self_check(tmp_path, monkeypatch):
     monkeypatch.setattr("requests.sessions.Session.request", forbidden)
     report = tmp_path / "report.json"
     assert run(report) == 0
-    result = json.loads(report.read_text())
+    result = json.loads(report.read_text(encoding="utf-8"))
     assert result["ok"]
     assert "qt-window" in result["checks"]
     assert {"benefit-filter-masked-report", "offline-link-file-import"}.issubset(

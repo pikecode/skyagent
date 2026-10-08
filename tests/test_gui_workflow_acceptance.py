@@ -24,7 +24,7 @@ def test_gui_workflow_cli_and_preserved_evidence(tmp_path, kind):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     report_path = output / "report.json"
-    report = json.loads(report_path.read_text())
+    report = json.loads(report_path.read_text(encoding="utf-8"))
     assert report["ok"] and report["qt_platform"] == "offscreen"
     assert len(report["steps"]) == 7
     assert report["protocol_requests"] == {

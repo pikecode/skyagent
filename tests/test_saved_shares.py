@@ -221,7 +221,7 @@ def test_restore_allows_masked_view_but_blocks_import_full_export(context, tmp_p
     outputs = CouponShareOutputs(db)
     rows = outputs.list_saved(sid, aid)
     outputs.export_to(target(tmp_path), sid, aid, owner, rows)
-    assert URL not in target(tmp_path).read_text()
+    assert URL not in target(tmp_path).read_text(encoding="utf-8-sig")
     with pytest.raises(ValueError):
         outputs.import_operation(sid, aid, owner, operation)
     with pytest.raises(ValueError):

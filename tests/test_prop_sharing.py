@@ -220,7 +220,8 @@ def test_prop_outputs_export_but_never_wrong_stock(context, tmp_path):
     assert rows[0].kind == "prop" and len(rows[0].resource_keys) == 4
     path = tmp_path.parent / (tmp_path.name + "-prop.csv")
     outputs.export_to(path, sid, aid, owner, rows, full=True)
-    assert URL in path.read_text() and "prop" in path.read_text()
+    content = path.read_text(encoding="utf-8-sig")
+    assert URL in content and "prop" in content
     stock_id = outputs.import_operation(sid, aid, owner, operation)
     stock = Inventory(db).list(sid)
     assert len(stock) == 1 and stock[0]["kind"] == "prop" and stock[0]["id"] == stock_id
