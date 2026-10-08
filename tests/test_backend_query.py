@@ -81,6 +81,7 @@ def test_login_query_projection_and_close():
         b"[" * 1000 + b"0" + b"]" * 1000,
         b"x" * (2 * 1024 * 1024 + 1),
     ],
+    ids=["duplicate-fields", "nonfinite-number", "deep-nesting", "oversized-body"],
 )
 def test_invalid_response_redacted_no_retry(payload):
     session = Session()

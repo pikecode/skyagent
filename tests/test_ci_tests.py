@@ -16,6 +16,10 @@ def test_ci_stall_diagnostic_identifies_last_test_without_stack_payload():
         )
         == "tests/test_a.py::test_bad - assertion"
     )
+    assert (
+        module["diagnostic"]("ERROR tests/test_a.py::test_setup - ValueError")
+        == "tests/test_a.py::test_setup - ValueError"
+    )
 
 
 def test_windows_timeout_kills_only_owned_process_tree(tmp_path, monkeypatch, capsys):

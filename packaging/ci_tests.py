@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def diagnostic(output):
-    failures = re.findall(r"^FAILED (tests[/\\][^\r\n]+)", output, re.M)
+    failures = re.findall(r"^(?:FAILED|ERROR) (tests[/\\][^\r\n]+)", output, re.M)
     if failures:
         return failures[-1][:500]
     active = re.findall(r"^tests[/\\][^\r\n]+", output, re.M)
@@ -80,7 +80,7 @@ def run(timeout=180):
         )
         escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error title=Desktop tests {reason}::{escaped}")
-        if not re.search(r"^FAILED tests[/\\]", output, re.M):
+        if not re.search(r"^(?:FAILED|ERROR) tests[/\\]", output, re.M):
             # An interpreter/runner failure can precede pytest's normal summary.
             # CI runs only synthetic tests; retain a bounded final trace to
             # distinguish a native crash from an encoding or timeout error.
@@ -89,7 +89,7 @@ def run(timeout=180):
             print(f"::error title=Pytest final trace::{escaped}")
         # Report every failing test summary, not just the last one, so platform
         # compatibility issues can be fixed together even without log access.
-        failures = re.findall(r"^FAILED (tests[/\\][^\r\n]+)", output, re.M)
+        failures = re.findall(r"^(?:FAILED|ERROR) (tests[/\\][^\r\n]+)", output, re.M)
         for failure in dict.fromkeys(failures):
             escaped = failure[:1000].replace("%", "%25").replace("\r", "%0D")
             print(f"::error title=Pytest failure::{escaped}")
