@@ -9,3 +9,9 @@ def test_ci_stall_diagnostic_identifies_last_test_without_stack_payload():
     log = "tests/test_a.py::test_one PASSED [1%]\ntests/test_a.py::test_two\nTimeout!\nprivate response payload\n"
     assert module["diagnostic"](log) == "tests/test_a.py::test_two"
     assert module["diagnostic"]("no test started") == "No active test identified"
+    assert (
+        module["diagnostic"](
+            "tests/test_z.py::test_pass PASSED\nFAILED tests/test_a.py::test_bad - assertion"
+        )
+        == "tests/test_a.py::test_bad - assertion"
+    )

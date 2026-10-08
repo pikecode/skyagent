@@ -9,11 +9,17 @@ from pathlib import Path
 
 
 def diagnostic(output):
+    failures = re.findall(r"^FAILED (tests[/\\][^\r\n]+)", output, re.M)
+    if failures:
+        return failures[-1][:500]
     active = re.findall(r"^tests[/\\][^\r\n]+", output, re.M)
     return active[-1][:500] if active else "No active test identified"
 
 
 def run(timeout=180):
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     root = Path(__file__).resolve().parents[1]
     reports = root / "build"
     reports.mkdir(exist_ok=True)
@@ -51,12 +57,12 @@ def run(timeout=180):
         output = decoded(error.stdout) + decoded(error.stderr)
         code = 124
     (reports / "ci-tests.log").write_text(output, encoding="utf-8")
-    print(output)
     if code:
         reason = "timed out" if code == 124 else "failed"
         message = f"Pytest {reason}; last active test: {diagnostic(output)}"
         escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error title=Desktop tests {reason}::{escaped}")
+    print(output)
     return code
 
 
