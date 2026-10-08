@@ -3,6 +3,7 @@
 import argparse
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -13,7 +14,14 @@ def diagnostic(output):
     if failures:
         return failures[-1][:500]
     active = re.findall(r"^tests[/\\][^\r\n]+", output, re.M)
-    return active[-1][:500] if active else "No active test identified"
+    message = active[-1][:500] if active else "No active test identified"
+    frames = re.findall(r'File "([^"]+)", line (\d+) in ([^\r\n]+)', output)
+    relevant = [
+        re.split(r"[/\\]", filename)[-1] + ":" + line + " " + function
+        for filename, line, function in frames
+        if "skyagent_manager" in filename or re.search(r"[/\\]tests[/\\]", filename)
+    ]
+    return message + ("; stack: " + ", ".join(relevant[-8:]) if relevant else "")
 
 
 def run(timeout=180):
@@ -32,37 +40,45 @@ def run(timeout=180):
         "-o",
         "faulthandler_timeout=60",
     ]
-    try:
-        result = subprocess.run(
+    log_path = reports / "ci-tests.log"
+    # Windows pipe readers can remain blocked after a parent is killed if a
+    # GUI descendant inherited the pipe. A file plus an explicit process-tree
+    # kill keeps the timeout bounded and preserves the faulthandler traceback.
+    with log_path.open("wb") as log:
+        process = subprocess.Popen(
             command,
             cwd=root,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=timeout,
-            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            start_new_session=sys.platform != "win32",
+            env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"},
         )
-        output = result.stdout + result.stderr
-        code = result.returncode
-    except subprocess.TimeoutExpired as error:
-
-        def decoded(value):
-            return (
-                value.decode("utf-8", errors="replace")
-                if isinstance(value, bytes)
-                else value or ""
-            )
-
-        output = decoded(error.stdout) + decoded(error.stderr)
-        code = 124
-    (reports / "ci-tests.log").write_text(output, encoding="utf-8")
+        try:
+            code = process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            if sys.platform == "win32":
+                subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    capture_output=True,
+                    timeout=10,
+                    check=False,
+                )
+            else:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            process.wait(timeout=10)
+            code = 124
+    with log_path.open("rb") as stream:
+        stream.seek(max(0, log_path.stat().st_size - 8 * 1024 * 1024))
+        output = stream.read().decode("utf-8", errors="replace")
     if code:
         reason = "timed out" if code == 124 else "failed"
         message = f"Pytest {reason}; last active test: {diagnostic(output)}"
         escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error title=Desktop tests {reason}::{escaped}")
-    print(output)
+    print("\n".join(line[:1000] for line in output.splitlines()[-200:]))
     return code
 
 
