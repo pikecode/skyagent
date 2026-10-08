@@ -1,6 +1,9 @@
 name: Desktop verification and development builds
 permissions:
   contents: read
+concurrency:
+  group: desktop-build-${{ github.ref }}
+  cancel-in-progress: true
 on:
   workflow_dispatch:
     inputs:
@@ -27,7 +30,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -e ".[dev,build]"
       - run: python -m ruff check skyagent_manager tests packaging
-      - run: python -m pytest -q
+      - run: python packaging/ci_tests.py --timeout 180
       - run: python -m skyagent_manager.main --self-check
       - run: python -m skyagent_manager.contract_check
       - run: python packaging/build.py
