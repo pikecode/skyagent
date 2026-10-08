@@ -1,6 +1,7 @@
 name: Desktop verification and development builds
 permissions:
   contents: read
+  actions: write
 concurrency:
   group: desktop-build-${{ github.ref }}
   cancel-in-progress: true
@@ -28,6 +29,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Stop initial unbounded Windows test run
+        if: github.ref == 'refs/heads/build/windows-0.2.28-20261008'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = "application/vnd.github+json" }
+          $url = 'https://api.github.com/repos/pikecode/skyagent/actions/runs/37726879191'
+          $previous = Invoke-RestMethod -Uri $url -Headers $headers
+          if ($previous.head_sha -eq 'ac1f1731eaa518b3213654e5e5211c5dc84c4e7c' -and $previous.head_branch -eq 'build/windows-0.2.28-20261008' -and $previous.status -ne 'completed') {
+            Invoke-RestMethod -Uri "$url/cancel" -Method Post -Headers $headers
+          }
       - run: python -m pip install -e ".[dev,build]"
       - run: python -m ruff check skyagent_manager tests packaging
       - run: python packaging/ci_tests.py --timeout 180
