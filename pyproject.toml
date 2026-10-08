@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skyagent-manager"
+version = "0.2.28"
+description = "Local multi-store member and benefit inventory manager"
+requires-python = ">=3.12"
+dependencies = ["PySide6>=6.8,<7", "cryptography>=43", "keyring>=25", "requests>=2.32"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.8"]
+build = ["pyinstaller>=6.22,<7"]
+
+[project.scripts]
+skyagent-manager = "skyagent_manager.main:main"
+
+[tool.setuptools.packages.find]
+include = ["skyagent_manager*"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
