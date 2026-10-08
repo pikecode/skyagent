@@ -75,9 +75,18 @@ def run(timeout=180):
         output = stream.read().decode("utf-8", errors="replace")
     if code:
         reason = "timed out" if code == 124 else "failed"
-        message = f"Pytest {reason}; last active test: {diagnostic(output)}"
+        message = (
+            f"Pytest {reason} (exit {code}); last active test: {diagnostic(output)}"
+        )
         escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error title=Desktop tests {reason}::{escaped}")
+        if not re.search(r"^FAILED tests[/\\]", output, re.M):
+            # An interpreter/runner failure can precede pytest's normal summary.
+            # CI runs only synthetic tests; retain a bounded final trace to
+            # distinguish a native crash from an encoding or timeout error.
+            tail = "\n".join(line[:500] for line in output.splitlines()[-20:])
+            escaped = tail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print(f"::error title=Pytest final trace::{escaped}")
         # Report every failing test summary, not just the last one, so platform
         # compatibility issues can be fixed together even without log access.
         failures = re.findall(r"^FAILED (tests[/\\][^\r\n]+)", output, re.M)

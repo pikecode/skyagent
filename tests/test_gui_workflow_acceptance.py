@@ -20,7 +20,7 @@ def test_gui_workflow_cli_and_preserved_evidence(tmp_path, kind):
         str(output),
     ]
     result = subprocess.run(
-        command, capture_output=True, text=True, timeout=30, cwd=root
+        command, capture_output=True, text=True, encoding="utf-8", timeout=30, cwd=root
     )
     assert result.returncode == 0, result.stdout + result.stderr
     report_path = output / "report.json"
@@ -52,7 +52,7 @@ def test_gui_workflow_cli_and_preserved_evidence(tmp_path, kind):
         assert "synthetic-workflow-chain" not in content
     before = {file.name: file.read_bytes() for file in output.iterdir()}
     repeated = subprocess.run(
-        command, capture_output=True, text=True, timeout=30, cwd=root
+        command, capture_output=True, text=True, encoding="utf-8", timeout=30, cwd=root
     )
     assert repeated.returncode != 0
     assert {file.name: file.read_bytes() for file in output.iterdir()} == before
